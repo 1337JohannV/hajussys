@@ -5,7 +5,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
-import util.FileUtil;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -22,6 +21,8 @@ public class Server {
     public String ipAddress;
     public Address serverAddress;
     private Map<String, String> currentQueries = new HashMap<>();
+    private double laziness = 0.5d;
+    public UUID currentId;
 
 
     public Server(int port) {
@@ -67,20 +68,18 @@ public class Server {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-            if(exchange.getRequestURI().getQuery() != null) {
-                this.addRequestAddress(this.server.addressList, new Address(server.currentQueries.get("ip"),
-                        Integer.parseInt(server.currentQueries.get("port"))));
-            }
 
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
                 switch (path) {
-                    case "/addr":
+                    case "/download":
+                        Random r = new Random();
+                        double randomValue = 1 * r.nextDouble();
+                        System.out.println(randomValue + "random");
                         this.response = gson.toJson(this.server.addressList);
                         exchange.sendResponseHeaders(200, response.getBytes().length);
                         OutputStream outputStream = exchange.getResponseBody();
                         outputStream.write(response.getBytes());
                         outputStream.close();
-
                     case "/getblocks":
 
                 }
@@ -99,6 +98,7 @@ public class Server {
             } else {
                 exchange.sendResponseHeaders(404, response.getBytes().length);
                 OutputStream outputStream = exchange.getResponseBody();
+                this.response = "{\"status\": 404}";
                 outputStream.write(response.getBytes());
                 outputStream.close();
             }

@@ -5,7 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import models.Address;
 import request.Request;
 import server.Server;
-import util.Ping;
+import util.Encoder;
 
 import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -50,6 +49,12 @@ public class Main {
                     System.out.println();
 
                 }
+                if (line.startsWith("download ")) {
+                    String url = Encoder.encodeValue(line.split(" ")[1]);
+                    this.server.currentId = UUID.randomUUID();
+                    System.out.println(url);
+
+                }
             } while (!Objects.equals(line, "stop"));
             server.stopServer();
             System.out.println("Stopping server...");
@@ -65,14 +70,20 @@ public class Main {
     }
 
     private void getAddresses() {
-        Request request = new Request(String.format("http://localhost:1215/addresses?ip=%s&port=%s",
-                this.server.ipAddress, this.server.port), "get", null);
+        Request request = new Request("http://localhost:1215/addresses", "get", null, server.serverAddress);
         HttpResponse<String> response = request.sendRequest();
         System.out.println(response + "res");
         List<Address> addresses = gson.fromJson(response.body(), listType);
         this.server.addressList.clear();
         addresses.forEach(address -> addRequestAddress(this.server.addressList, address));
         System.out.println(this.server.addressList);
+    }
+
+    private void sendDownloadRequest() {
+        this.server.addressList.forEach(address -> {
+           Request request = new Request(address.getHttpAddress("/download"),
+                   "get", null, server.serverAddress);
+        });
     }
 
 

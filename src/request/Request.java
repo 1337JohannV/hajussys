@@ -1,6 +1,8 @@
 package request;
 
 
+import models.Address;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,7 +16,7 @@ public class Request {
     private HttpClient httpClient;
     private HttpRequest httpRequest;
 
-    public Request(String address, String method, String content) {
+    public Request(String address, String method, String content, Address forwardedFor) {
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
@@ -22,6 +24,7 @@ public class Request {
         if (method.equalsIgnoreCase("post")) {
             httpRequest = HttpRequest.newBuilder()
                     .header("Content-type", "application/json")
+                    .header("X-Forwarded-For", forwardedFor.toString())
                     .uri(URI.create(address))
                     .POST(HttpRequest.BodyPublishers.ofString(content))
                     .timeout(Duration.ofSeconds(5))
@@ -29,6 +32,7 @@ public class Request {
         } else {
             httpRequest = HttpRequest.newBuilder()
                     .header("Content-type", "application/json")
+                    .header("X-Forwarded-For", forwardedFor.toString())
                     .uri(URI.create(address))
                     .timeout(Duration.ofSeconds(10))
                     .GET()
