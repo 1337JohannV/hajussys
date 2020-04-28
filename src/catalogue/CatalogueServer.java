@@ -19,7 +19,7 @@ public class CatalogueServer {
 
     private HttpServer server;
     public List<Address> addressList = new ArrayList<>();
-    private Map<String, String> currentQueries = new HashMap<>();
+    Address toAdd;
 
     public CatalogueServer() throws IOException {
 
@@ -39,7 +39,7 @@ public class CatalogueServer {
             addressList = updatedList;
             System.out.println("Addresses: " + addressList);
         };
-        executorService.scheduleAtFixedRate(checkNodes,0, 5, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(checkNodes, 0, 5, TimeUnit.SECONDS);
     }
 
     private class RequestHandler implements HttpHandler {
@@ -56,12 +56,11 @@ public class CatalogueServer {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             System.out.println("REQ RECEIVED");
-            if (exchange.getRequestURI().getQuery() != null) {
-                this.server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-                this.addRequestAddress(this.server.addressList, new Address(server.currentQueries.get("ip"),
-                        Integer.parseInt(server.currentQueries.get("port"))));
-            }
-
+            exchange.getRequestHeaders().get("X-FORWARDED-FOR").forEach(str -> {
+                System.out.println(str);
+                toAdd = gson.fromJson(str, Address.class);
+            });
+            this.addRequestAddress(this.server.addressList, toAdd);
             if (path.equals("/addresses")) {
                 this.response = gson.toJson(this.server.addressList);
                 exchange.sendResponseHeaders(200, response.getBytes().length);
