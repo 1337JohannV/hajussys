@@ -33,11 +33,11 @@ public class Main {
             String line;
             do {
                 line = scanner.nextLine();
-                if (line.equalsIgnoreCase("current_addresses")) {
+                if (line.equalsIgnoreCase("current")) {
                     System.out.println("calls from cmd");
                     System.out.println(server.addressList);
                 }
-                if (line.equalsIgnoreCase("update_address")) {
+                if (line.equalsIgnoreCase("update")) {
                     System.out.println("calls from cmd");
                     updateAddresses();
                 }
@@ -58,7 +58,7 @@ public class Main {
         addresses.add(address);
     }
 
-    private void updateAddresses() throws InterruptedException {
+    private void updateAddresses() {
         this.server.addressList.remove(this.server.serverAddress);
         List<Address> updatedAddresses = new ArrayList<>();
         this.server.addressList.parallelStream().forEach(address -> {
@@ -77,6 +77,7 @@ public class Main {
 
         });
         this.server.addressList = updatedAddresses;
+        this.server.addressList.remove(this.server.serverAddress);
     }
 
     public static void main(String[] args) throws InterruptedException {
