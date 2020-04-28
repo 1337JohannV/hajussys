@@ -74,8 +74,10 @@ public class Server {
                     case "/download":
                         Random r = new Random();
                         double randomValue = 1 * r.nextDouble();
+                        System.out.println(exchange.getRequestHeaders().get("X-FORWARDED-FOR"));
+                        System.out.println(exchange.getRequestURI() + "URI");
                         System.out.println(randomValue + "random");
-                        this.response = gson.toJson(this.server.addressList);
+                        this.response = "DOWNLOAD";
                         exchange.sendResponseHeaders(200, response.getBytes().length);
                         OutputStream outputStream = exchange.getResponseBody();
                         outputStream.write(response.getBytes());

@@ -41,8 +41,6 @@ public class Request {
     }
 
     public HttpResponse<String> sendRequest() {
-        System.out.println("SENDING REQUEST");
-        System.out.println(this.httpRequest.uri().toString());
         try {
             return this.httpClient.send(this.httpRequest, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {

@@ -33,7 +33,7 @@ public class Main {
             System.out.println("CHECKING AVAILABLE NODES...");
             ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
             Runnable checkNodes = this::getAddresses;
-            executorService.scheduleAtFixedRate(checkNodes,0, 5, TimeUnit.SECONDS);
+            executorService.scheduleAtFixedRate(checkNodes, 0, 5, TimeUnit.SECONDS);
             String line;
             do {
                 line = scanner.nextLine();
@@ -52,7 +52,7 @@ public class Main {
                 if (line.startsWith("download ")) {
                     String url = Encoder.encodeValue(line.split(" ")[1]);
                     this.server.currentId = UUID.randomUUID();
-                    System.out.println(url);
+                    this.sendDownloadRequest(url);
 
                 }
             } while (!Objects.equals(line, "stop"));
@@ -72,17 +72,17 @@ public class Main {
     private void getAddresses() {
         Request request = new Request("http://localhost:1215/addresses", "get", null, server.serverAddress);
         HttpResponse<String> response = request.sendRequest();
-        System.out.println(response + "res");
         List<Address> addresses = gson.fromJson(response.body(), listType);
         this.server.addressList.clear();
         addresses.forEach(address -> addRequestAddress(this.server.addressList, address));
-        System.out.println(this.server.addressList);
     }
 
-    private void sendDownloadRequest() {
+    private void sendDownloadRequest(String url) {
         this.server.addressList.forEach(address -> {
-           Request request = new Request(address.getHttpAddress("/download"),
-                   "get", null, server.serverAddress);
+            Request request = new Request(address.getHttpAddress(String.format("/download?id=%s&url=%s", this.server.currentId.toString(), url)),
+                    "get", null, server.serverAddress);
+            HttpResponse<String> response = request.sendRequest();
+            System.out.println(response);
         });
     }
 
