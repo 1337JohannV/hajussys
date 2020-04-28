@@ -29,7 +29,7 @@ public class Main {
             System.out.println("Write stop to terminate");
             System.out.println("Commands: update_address, current_addresses");
             System.out.println("CHECKING AVAILABLE NODES...");
-            updateAddresses();
+            getAddresses();
             String line;
             do {
                 line = scanner.nextLine();
@@ -39,7 +39,7 @@ public class Main {
                 }
                 if (line.equalsIgnoreCase("update")) {
                     System.out.println("calls from cmd");
-                    updateAddresses();
+                    getAddresses();
                 }
                 if (line.equalsIgnoreCase("read")) {
                     System.out.println();
@@ -52,33 +52,23 @@ public class Main {
     }
 
     private void addRequestAddress(List<Address> addresses, Address address) {
-        if (addresses.contains(address) || address == this.server.serverAddress) {
+        if (addresses.contains(address) || address.equals(this.server.serverAddress)) {
             return;
         }
+
         addresses.add(address);
     }
 
-    private void updateAddresses() {
-        this.server.addressList.remove(this.server.serverAddress);
-        List<Address> updatedAddresses = new ArrayList<>();
-        this.server.addressList.parallelStream().forEach(address -> {
-            if (Ping.isAddressReachable(address)) {
-                updatedAddresses.add(address);
-                try {
-                    Request request = new Request(address.getHttpAddress(String.format("/addr?ip=%s&port=%s",
-                            this.server.ipAddress, this.server.port)), "get", null);
-                    HttpResponse<String> response = request.sendRequest();
-                    List<Address> addresses = gson.fromJson(response.body(), listType);
-                    addresses.forEach(ads -> addRequestAddress(updatedAddresses, ads));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-        });
-        this.server.addressList = updatedAddresses;
-        this.server.addressList.remove(this.server.serverAddress);
+    private void getAddresses() {
+        Request request = new Request(String.format("http://localhost:1215/addresses?ip=%s&port=%s",
+                this.server.ipAddress, this.server.port), "get", null);
+        HttpResponse<String> response = request.sendRequest();
+        System.out.println(response + "res");
+        List<Address> addresses = gson.fromJson(response.body(), listType);
+        this.server.addressList.clear();
+        addresses.forEach(address -> addRequestAddress(this.server.addressList, address));
     }
+
 
     public static void main(String[] args) throws InterruptedException {
         Main main = new Main();

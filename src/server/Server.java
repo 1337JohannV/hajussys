@@ -33,7 +33,6 @@ public class Server {
             this.port = port;
             this.ipAddress = getIpAddress();
             server.start();
-            this.addressList = FileUtil.readFromAddressFile();
         } catch (Exception e) {
             this.server = null;
             System.out.println("Port already in use");
@@ -68,7 +67,6 @@ public class Server {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-            System.out.println(exchange.getRequestURI().getQuery());
             if(exchange.getRequestURI().getQuery() != null) {
                 this.addRequestAddress(this.server.addressList, new Address(server.currentQueries.get("ip"),
                         Integer.parseInt(server.currentQueries.get("port"))));
