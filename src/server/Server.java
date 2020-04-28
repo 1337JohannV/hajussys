@@ -5,6 +5,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
+import models.Path;
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -17,6 +19,7 @@ public class Server {
 
     private HttpServer server;
     public List<Address> addressList = new ArrayList<>();
+    public List<Path> pathList = new ArrayList<>();
     public int port;
     public String ipAddress;
     public Address serverAddress;
@@ -87,15 +90,25 @@ public class Server {
                 }
 
             } else if (exchange.getRequestMethod().equalsIgnoreCase("post")) {
-                if (path.equalsIgnoreCase("/inv")) {
-                    InputStream is = exchange.getRequestBody();
-                    this.response = "1";
-                    exchange.sendResponseHeaders(200, response.getBytes().length);
-                    OutputStream outputStream = exchange.getResponseBody();
-                    outputStream.write(response.getBytes());
-                    outputStream.close();
-                } else {
-
+                InputStream inputStream;
+                OutputStream outputStream;
+                switch(path) {
+                    case "/inv":
+                        inputStream = exchange.getRequestBody();
+                        this.response = "1";
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                        outputStream = exchange.getResponseBody();
+                        outputStream.write(response.getBytes());
+                        outputStream.close();
+                    case "/file":
+                        /*
+                        inputStream = exchange.getRequestBody();
+                        this.response = "1";
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                        outputStream = exchange.getResponseBody();
+                        outputStream.write(response.getBytes());
+                        outputStream.close();
+                        */
                 }
             } else {
                 exchange.sendResponseHeaders(404, response.getBytes().length);
