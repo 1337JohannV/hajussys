@@ -10,6 +10,9 @@ import util.Ping;
 import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -29,7 +32,9 @@ public class Main {
             System.out.println("Write stop to terminate");
             System.out.println("Commands: update_address, current_addresses");
             System.out.println("CHECKING AVAILABLE NODES...");
-            getAddresses();
+            ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+            Runnable checkNodes = this::getAddresses;
+            executorService.scheduleAtFixedRate(checkNodes,0, 5, TimeUnit.SECONDS);
             String line;
             do {
                 line = scanner.nextLine();
@@ -67,6 +72,7 @@ public class Main {
         List<Address> addresses = gson.fromJson(response.body(), listType);
         this.server.addressList.clear();
         addresses.forEach(address -> addRequestAddress(this.server.addressList, address));
+        System.out.println(this.server.addressList);
     }
 
 
