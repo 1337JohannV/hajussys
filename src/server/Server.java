@@ -5,6 +5,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
+import models.Path;
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -17,6 +19,7 @@ public class Server {
 
     private HttpServer server;
     public List<Address> addressList = new ArrayList<>();
+    public List<Path> pathList = new ArrayList<>();
     public int port;
     public String ipAddress;
     public Address serverAddress;
