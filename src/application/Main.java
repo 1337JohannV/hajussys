@@ -33,7 +33,7 @@ public class Main {
             System.out.println("CHECKING AVAILABLE NODES...");
             ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
             Runnable checkNodes = this::getAddresses;
-            executorService.scheduleAtFixedRate(checkNodes, 0, 5, TimeUnit.SECONDS);
+            executorService.scheduleAtFixedRate(checkNodes, 0, 60, TimeUnit.SECONDS);
             String line;
             do {
                 line = scanner.nextLine();
@@ -73,6 +73,7 @@ public class Main {
         List<Address> addresses = gson.fromJson(response.body(), listType);
         this.server.addressList.clear();
         addresses.forEach(address -> addRequestAddress(this.server.addressList, address));
+        System.out.println("Updated nodes");
     }
 
     private void sendDownloadRequest(String url) {

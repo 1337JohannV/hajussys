@@ -1,12 +1,14 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
 import models.Path;
 import request.Request;
+import util.Encoder;
 import util.Response;
 
 import java.io.*;
@@ -64,7 +66,7 @@ public class Server {
     static class RequestHandler implements HttpHandler {
 
         private Server server;
-        private Gson gson = new Gson();
+        private Gson gson= new GsonBuilder().disableHtmlEscaping().create();
         private String response;
         private Address requestAddress;
 
@@ -102,13 +104,19 @@ public class Server {
                         HttpResponse response = req.sendRequest();
                         if (response != null) {
                             String mimeType = response.headers().firstValue("Content-Type").orElse(null);
-                            mimeType = mimeType != null ? mimeType.split(";")[0] : null;
-                            String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes());
+                            final String mimeTypeFinal = mimeType != null ? mimeType.split(";")[0] : null;
+                            String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes(StandardCharsets.UTF_8));
                             this.response = new Response(200, null, null).toString();
                             exchange.sendResponseHeaders(200, this.response.getBytes().length);
-                            //TODO: send POST request.
-                            //this.sendDownloadRequest(null, fileId);
-
+                            Optional<Path> optionalPath = this.server.pathList.stream().filter(p -> p.getId().equals(fileId)).findAny();
+                            if (optionalPath.isPresent()) {
+                                System.out.println("SENDS REQUEST TO ONE IN PATH TABLE");
+                                sendFileRequest(optionalPath.get().getDownload(), fileId, new Response(200, mimeTypeFinal, encodedFile));
+                            } else {
+                                System.out.println("SENDS REQUEST TO ALL");
+                                this.server.addressList.forEach(address
+                                                -> sendFileRequest(address, fileId, new Response(200, mimeTypeFinal, encodedFile)));
+                            }
                         } else {
                             this.response = new Response(500, null, null).toString();
                             exchange.sendResponseHeaders(500, this.response.getBytes().length);
@@ -138,9 +146,19 @@ public class Server {
                     if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
                         System.out.println("FILE RECEIVED");
                         System.out.println(requestBody);
+                        Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), fileId);
                         this.response = new Response(200, null, null).toString();
                     } else {
-                        this.response = requestBody;
+                        this.response = new Response(200, null, null).toString();
+                        Optional<Path> optionalPath = this.server.pathList.stream().filter(p-> p.getId().equals(fileId)).findAny();
+                        if (optionalPath.isPresent()) {
+                            System.out.println("SENDS REQUEST TO ONE IN PATH TABLE");
+                            sendFileRequest(optionalPath.get().getDownload(), fileId, requestBody);
+                        } else {
+                            System.out.println("SENDS REQUEST TO ALL");
+                            this.server.addressList.forEach(address
+                                    -> sendFileRequest(address, fileId, requestBody));
+                        }
                     }
 
                     exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -180,6 +198,12 @@ public class Server {
                     "post", response.toString(), this.server.serverAddress);
             request.sendRequest();
 
+        }
+
+        private void sendFileRequest(Address address, String fileId, String response) {
+            Request request = new Request(address.getHttpAddress(String.format("/file?id=%s", fileId)),
+                    "post", response, this.server.serverAddress);
+            request.sendRequest();
         }
 
         private void addPath(Path path) {
