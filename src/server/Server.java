@@ -119,6 +119,10 @@ public class Server {
             }
         }
 
+        private boolean isCorrectAddress() {
+            return true;
+        }
+
         private void addRequestAddress(List<Address> addresses, Address address) {
             if (addresses.contains(address)) {
                 System.out.println("REQUEST ADDRESS ALREADY PRESENT");

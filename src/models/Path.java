@@ -2,33 +2,60 @@ package models;
 
 public class Path {
     private String id;
-    private String address;
-    private int port;
+    private Address download;
+    private Address file;
+    private boolean resolved = false;
 
-    public Path(String id, String address, int port){
+    public Path(String id, Address download, Address file, int port) {
         this.id = id;
-        this.address = address;
-        this.port = port;
+        this.download = download;
+        this.file = file;
     }
 
     public String getId() {
         return id;
     }
 
-    public String getAddress() {
-        return address;
+    public Address getDownload() {
+        return download;
     }
 
-    public int getPort() {
-        return port;
+    public void setDownload(Address download) {
+        this.download = download;
+    }
+
+    public Address getFile() {
+        return file;
+    }
+
+    public void setFile(Address file) {
+        this.file = file;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        String objectString = (String) obj;
+        if (obj == this) {
+            return true;
+        }
+        return this.id.equals(objectString);
     }
 
     @Override
     public String toString() {
         return "Path{" +
                 "id='" + id + '\'' +
-                ", address='" + address + '\'' +
-                ", port=" + port +
+                ", download=" + download +
+                ", file=" + file +
+                ", resolved=" + resolved +
                 '}';
     }
 }
