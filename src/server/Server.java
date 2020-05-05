@@ -16,6 +16,7 @@ import java.net.UnknownHostException;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class Server {
@@ -77,36 +78,50 @@ public class Server {
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
             final List<String> requestAddresses = exchange.getRequestHeaders().get("X-FORWARDED-FOR");
             if (requestAddresses != null && requestAddresses.size() != 0) {
-                requestAddresses.forEach( ad -> requestAddress = gson.fromJson(ad, Address.class));
+                requestAddresses.forEach(ad -> requestAddress = gson.fromJson(ad, Address.class));
             } else {
                 final String requestIp = exchange.getRemoteAddress().getAddress().toString().split("/")[1];
-                requestAddress = new Address(requestIp ,1215);
+                requestAddress = new Address(requestIp, 1215);
             }
             System.out.println("REQUEST ADDRESS:" + requestAddress);
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
                 if ("/download".equals(path)) {
+                    String fileUrl = server.currentQueries.get("url");
+                    String fileId = server.currentQueries.get("id");
+                    this.addPath(new Path(fileId, requestAddress, null));
+                    System.out.println(this.server.pathList);
                     Random r = new Random();
                     double randomValue = 1 * r.nextDouble();
-                    if (/*randomValue > this.server.laziness*/true) {
-                        System.out.println("DOWNLOADS THE FILE...");
-                        String fileUrl = server.currentQueries.get("url");
-                        String fileId = server.currentQueries.get("id");
+                    if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
+                        System.out.println("IGNORES DOWNLOAD, THIS SERVER INITIATED DOWNLOAD REQUEST");
+                        this.response = new Response(200, null, null).toString();
+                        exchange.sendResponseHeaders(200, this.response.getBytes().length);
+                    } else if (randomValue > this.server.laziness) {
+                        System.out.println("DOWNLOADS FILE");
                         Request req = new Request(fileUrl, "get", null, null);
                         HttpResponse response = req.sendRequest();
                         if (response != null) {
                             String mimeType = response.headers().firstValue("Content-Type").orElse(null);
                             mimeType = mimeType != null ? mimeType.split(";")[0] : null;
                             String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes());
-                            this.response = new Response(200, mimeType, encodedFile).toString();
+                            this.response = new Response(200, null, null).toString();
+                            exchange.sendResponseHeaders(200, this.response.getBytes().length);
+                            //TODO: send POST request.
+                            //this.sendDownloadRequest(null, fileId);
+
                         } else {
-                           this.response = new Response(500, null , null).toString();
+                            this.response = new Response(500, null, null).toString();
+                            exchange.sendResponseHeaders(500, this.response.getBytes().length);
+
                         }
                     } else {
-                        System.out.println("DOES NOT DOWNLOAD");
+                        System.out.println("DOES NOT DOWNLOAD FILE");
                         this.response = new Response(200, null, null).toString();
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                        List<Address> availableAddresses = this.server.addressList
+                                .stream().filter(ad -> !ad.equals(this.requestAddress)).collect(Collectors.toList());
+                        availableAddresses.forEach(address -> sendDownloadRequest(address, String.format("/download?id=%s&url=%s", fileId, fileUrl)));
                     }
-
-                    exchange.sendResponseHeaders(200, response.getBytes().length);
                     OutputStream outputStream = exchange.getResponseBody();
                     outputStream.write(response.getBytes());
                     outputStream.close();
@@ -115,23 +130,24 @@ public class Server {
             } else if (exchange.getRequestMethod().equalsIgnoreCase("post")) {
                 InputStream inputStream;
                 OutputStream outputStream;
-                switch(path) {
-                    case "/inv":
-                        inputStream = exchange.getRequestBody();
-                        this.response = "1";
-                        exchange.sendResponseHeaders(200, response.getBytes().length);
-                        outputStream = exchange.getResponseBody();
-                        outputStream.write(response.getBytes());
-                        outputStream.close();
-                    case "/file":
-                        /*
-                        inputStream = exchange.getRequestBody();
-                        this.response = "1";
-                        exchange.sendResponseHeaders(200, response.getBytes().length);
-                        outputStream = exchange.getResponseBody();
-                        outputStream.write(response.getBytes());
-                        outputStream.close();
-                        */
+                if ("/file".equals(path)) {
+                    String fileId = this.server.currentQueries.get("id");
+                    inputStream = exchange.getRequestBody();
+                    String requestBody = getRequestBody(inputStream);
+                    this.addPath(new Path(fileId, null, this.requestAddress));
+                    if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
+                        System.out.println("FILE RECEIVED");
+                        System.out.println(requestBody);
+                        this.response = new Response(200, null, null).toString();
+                    } else {
+                        this.response = requestBody;
+                    }
+
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                    outputStream = exchange.getResponseBody();
+                    outputStream.write(response.getBytes());
+                    outputStream.close();
+
                 }
             } else {
                 exchange.sendResponseHeaders(404, response.getBytes().length);
@@ -153,6 +169,35 @@ public class Server {
             }
             addresses.add(address);
         }
+
+        private void sendDownloadRequest(Address address, String query) {
+            Request request = new Request(address.getHttpAddress(query), "get", null, this.server.serverAddress);
+            request.sendRequest();
+        }
+
+        private void sendFileRequest(Address address, String fileId, Response response) {
+            Request request = new Request(address.getHttpAddress(String.format("/file?id=%s", fileId)),
+                    "post", response.toString(), this.server.serverAddress);
+            request.sendRequest();
+
+        }
+
+        private void addPath(Path path) {
+            Optional<Path> k = this.server.pathList.stream().filter(p -> p.getId().equals(path.getId())).findAny();
+            if (k.isEmpty()) {
+                this.server.pathList.add(path);
+            } else {
+                this.server.pathList.stream().filter(p -> p.getId().equals(path.getId())).forEach(x -> {
+                    if (x.getDownload() == null && path.getDownload() != null) {
+                        x.setDownload(path.getDownload());
+                    }
+                    if (x.getFile() == null && path.getFile() != null) {
+                        x.setFile(path.getFile());
+                    }
+                });
+            }
+        }
+
 
         private String getRequestBody(InputStream inputStream) throws IOException {
 

@@ -6,7 +6,7 @@ public class Path {
     private Address file;
     private boolean resolved = false;
 
-    public Path(String id, Address download, Address file, int port) {
+    public Path(String id, Address download, Address file) {
         this.id = id;
         this.download = download;
         this.file = file;
