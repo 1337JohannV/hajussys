@@ -6,11 +6,14 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
 import models.Path;
+import request.Request;
+import util.Response;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -71,22 +74,34 @@ public class Server {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-
+            final String requestIp = exchange.getRemoteAddress().getAddress().toString().split("/")[1];
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
-                switch (path) {
-                    case "/download":
-                        Random r = new Random();
-                        double randomValue = 1 * r.nextDouble();
-                        System.out.println(exchange.getRequestHeaders().get("X-FORWARDED-FOR"));
-                        System.out.println(exchange.getRequestURI() + "URI");
-                        System.out.println(randomValue + "random");
-                        this.response = "DOWNLOAD";
-                        exchange.sendResponseHeaders(200, response.getBytes().length);
-                        OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(response.getBytes());
-                        outputStream.close();
-                    case "/getblocks":
+                if ("/download".equals(path)) {
+                    Random r = new Random();
+                    double randomValue = 1 * r.nextDouble();
+                    if (/*randomValue > this.server.laziness*/true) {
+                        System.out.println("DOWNLOADS THE FILE...");
+                        String fileUrl = server.currentQueries.get("url");
+                        String fileId = server.currentQueries.get("id");
+                        Request req = new Request(fileUrl, "get", null, null);
+                        HttpResponse response = req.sendRequest();
+                        if (response != null) {
+                            String mimeType = response.headers().firstValue("Content-Type").orElse(null);
+                            mimeType = mimeType != null ? mimeType.split(";")[0] : null;
+                            String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes());
+                            this.response = new Response(200, mimeType, encodedFile).toString();
+                        } else {
+                           this.response = new Response(500, null , null).toString();
+                        }
+                    } else {
+                        System.out.println("DOES NOT DOWNLOAD");
+                        this.response = new Response(200, null, null).toString();
+                    }
 
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                    OutputStream outputStream = exchange.getResponseBody();
+                    outputStream.write(response.getBytes());
+                    outputStream.close();
                 }
 
             } else if (exchange.getRequestMethod().equalsIgnoreCase("post")) {

@@ -38,11 +38,9 @@ public class Main {
             do {
                 line = scanner.nextLine();
                 if (line.equalsIgnoreCase("current")) {
-                    System.out.println("calls from cmd");
                     System.out.println(server.addressList);
                 }
                 if (line.equalsIgnoreCase("update")) {
-                    System.out.println("calls from cmd");
                     getAddresses();
                 }
                 if (line.equalsIgnoreCase("read")) {
@@ -82,7 +80,7 @@ public class Main {
             Request request = new Request(address.getHttpAddress(String.format("/download?id=%s&url=%s", this.server.currentId.toString(), url)),
                     "get", null, server.serverAddress);
             HttpResponse<String> response = request.sendRequest();
-            System.out.println(response);
+            System.out.println(response.body());
         });
     }
 

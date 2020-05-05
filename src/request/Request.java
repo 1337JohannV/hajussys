@@ -24,7 +24,7 @@ public class Request {
         if (method.equalsIgnoreCase("post")) {
             httpRequest = HttpRequest.newBuilder()
                     .header("Content-type", "application/json")
-                    .header("X-Forwarded-For", forwardedFor.toString())
+                    .header("X-Forwarded-For", forwardedFor != null ? forwardedFor.toString() : "dummy")
                     .uri(URI.create(address))
                     .POST(HttpRequest.BodyPublishers.ofString(content))
                     .timeout(Duration.ofSeconds(5))
@@ -32,7 +32,7 @@ public class Request {
         } else {
             httpRequest = HttpRequest.newBuilder()
                     .header("Content-type", "application/json")
-                    .header("X-Forwarded-For", forwardedFor.toString())
+                    .header("X-Forwarded-For", forwardedFor != null ? forwardedFor.toString() : "dummy")
                     .uri(URI.create(address))
                     .timeout(Duration.ofSeconds(10))
                     .GET()
