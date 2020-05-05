@@ -65,6 +65,7 @@ public class Server {
         private Server server;
         private Gson gson = new Gson();
         private String response;
+        private Address requestAddress;
 
         RequestHandler(Server server) {
             this.server = server;
@@ -74,7 +75,14 @@ public class Server {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-            final String requestIp = exchange.getRemoteAddress().getAddress().toString().split("/")[1];
+            final List<String> requestAddresses = exchange.getRequestHeaders().get("X-FORWARDED-FOR");
+            if (requestAddresses != null && requestAddresses.size() != 0) {
+                requestAddresses.forEach( ad -> requestAddress = gson.fromJson(ad, Address.class));
+            } else {
+                final String requestIp = exchange.getRemoteAddress().getAddress().toString().split("/")[1];
+                requestAddress = new Address(requestIp ,1215);
+            }
+            System.out.println("REQUEST ADDRESS:" + requestAddress);
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
                 if ("/download".equals(path)) {
                     Random r = new Random();
