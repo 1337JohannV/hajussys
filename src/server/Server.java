@@ -74,14 +74,13 @@ public class Server {
         public void handle(HttpExchange exchange) throws IOException {
             final String path = exchange.getRequestURI().getPath();
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
-
+            final String requestIp = exchange.getRemoteAddress().getAddress().toString().split("/")[1];
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
                 if ("/download".equals(path)) {
                     Random r = new Random();
                     double randomValue = 1 * r.nextDouble();
                     if (/*randomValue > this.server.laziness*/true) {
-                        System.out.println("DONWLOADS THE FILE...");
-                        System.out.println(exchange.getRequestURI().getQuery());
+                        System.out.println("DOWNLOADS THE FILE...");
                         String fileUrl = server.currentQueries.get("url");
                         String fileId = server.currentQueries.get("id");
                         Request req = new Request(fileUrl, "get", null, null);
@@ -95,7 +94,7 @@ public class Server {
                            this.response = new Response(500, null , null).toString();
                         }
                     } else {
-                        System.out.println("does not download");
+                        System.out.println("DOES NOT DOWNLOAD");
                         this.response = new Response(200, null, null).toString();
                     }
 
