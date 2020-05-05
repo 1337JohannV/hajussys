@@ -6,12 +6,14 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
 import models.Path;
+import request.Request;
 import util.Response;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -77,8 +79,21 @@ public class Server {
                 if ("/download".equals(path)) {
                     Random r = new Random();
                     double randomValue = 1 * r.nextDouble();
-                    if (randomValue > this.server.laziness) {
+                    if (/*randomValue > this.server.laziness*/true) {
                         System.out.println("DONWLOADS THE FILE...");
+                        System.out.println(exchange.getRequestURI().getQuery());
+                        String fileUrl = server.currentQueries.get("url");
+                        String fileId = server.currentQueries.get("id");
+                        Request req = new Request(fileUrl, "get", null, null);
+                        HttpResponse response = req.sendRequest();
+                        if (response != null) {
+                            String mimeType = response.headers().firstValue("Content-Type").orElse(null);
+                            mimeType = mimeType != null ? mimeType.split(";")[0] : null;
+                            String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes());
+                            this.response = new Response(200, mimeType, encodedFile).toString();
+                        } else {
+                           this.response = new Response(500, null , null).toString();
+                        }
                     } else {
                         System.out.println("does not download");
                         this.response = new Response(200, null, null).toString();
