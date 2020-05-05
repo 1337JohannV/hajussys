@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import models.Address;
 import models.Path;
+import util.Response;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -73,20 +74,20 @@ public class Server {
             server.currentQueries = getQueryStrings(exchange.getRequestURI().getQuery());
 
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
-                switch (path) {
-                    case "/download":
-                        Random r = new Random();
-                        double randomValue = 1 * r.nextDouble();
-                        System.out.println(exchange.getRequestHeaders().get("X-FORWARDED-FOR"));
-                        System.out.println(exchange.getRequestURI() + "URI");
-                        System.out.println(randomValue + "random");
-                        this.response = "DOWNLOAD";
-                        exchange.sendResponseHeaders(200, response.getBytes().length);
-                        OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(response.getBytes());
-                        outputStream.close();
-                    case "/getblocks":
+                if ("/download".equals(path)) {
+                    Random r = new Random();
+                    double randomValue = 1 * r.nextDouble();
+                    if (randomValue > this.server.laziness) {
+                        System.out.println("DONWLOADS THE FILE...");
+                    } else {
+                        System.out.println("does not download");
+                        this.response = new Response(200, null, null).toString();
+                    }
 
+                    exchange.sendResponseHeaders(200, response.getBytes().length);
+                    OutputStream outputStream = exchange.getResponseBody();
+                    outputStream.write(response.getBytes());
+                    outputStream.close();
                 }
 
             } else if (exchange.getRequestMethod().equalsIgnoreCase("post")) {
