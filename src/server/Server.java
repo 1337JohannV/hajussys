@@ -41,7 +41,7 @@ public class Server {
         while(this.server == null){
             try {
                 Scanner scanner = new Scanner(System.in);
-                System.out.println("Enter port: ");
+                System.out.print("Enter port: ");
                 int port = scanner.nextInt();
                 server = HttpServer.create(new InetSocketAddress(port), 0);
                 server.createContext("/", new RequestHandler(this));
@@ -51,7 +51,7 @@ public class Server {
                 this.ipAddress = getIpAddress();
                 server.start();
             } catch (BindException e) {
-                System.out.println("Port already in use! Enter different port.");
+                System.out.println("Port already in use! Enter a different port.");
             } catch (InputMismatchException e) {
                 System.out.println("Port must be a number! Enter a number.");
             } catch (Exception e) {
