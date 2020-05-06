@@ -11,6 +11,9 @@ import request.Request;
 import util.Encoder;
 import util.Response;
 
+import java.net.BindException;
+import java.util.*;
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -34,24 +37,37 @@ public class Server {
     public UUID currentId;
 
 
-    public Server(int port) {
-        try {
-            server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext("/", new RequestHandler(this));
-            server.setExecutor(null);
-            this.serverAddress = new Address(getIpAddress(), port);
-            this.port = port;
-            this.ipAddress = getIpAddress();
-            server.start();
-        } catch (Exception e) {
-            this.server = null;
-            System.out.println("Port already in use");
+    public Server() {
+        while(this.server == null){
+            try {
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("Enter port: ");
+                int port = scanner.nextInt();
+                server = HttpServer.create(new InetSocketAddress(port), 0);
+                server.createContext("/", new RequestHandler(this));
+                server.setExecutor(null);
+                this.serverAddress = new Address(getIpAddress(), port);
+                this.port = port;
+                this.ipAddress = getIpAddress();
+                server.start();
+            } catch (BindException e) {
+                System.out.println("Port already in use! Enter different port.");
+            } catch (InputMismatchException e) {
+                System.out.println("Port must be a number! Enter a number.");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
     }
 
     public void stopServer() {
         this.server.stop(0);
         this.server = null;
+    }
+
+    public int getPort() {
+        return port;
     }
 
     private static String getIpAddress() throws UnknownHostException {
