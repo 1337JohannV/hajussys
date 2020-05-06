@@ -9,11 +9,8 @@ import util.Encoder;
 
 import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
-import java.sql.SQLOutput;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Main {
 
@@ -47,9 +44,11 @@ public class Main {
 
                 }
                 if (line.startsWith("download ")) {
-                    String url = Encoder.encodeValue(line.split(" ")[1]);
-                    this.server.currentId = UUID.randomUUID();
-                    this.sendDownloadRequest(url);
+                    final String url = Encoder.encodeValue(line.split(" ")[1]);
+                    CompletableFuture.runAsync(() -> {
+                        this.server.currentId = UUID.randomUUID();
+                        this.sendDownloadRequest(url);
+                    });
 
                 }
             } while (!Objects.equals(line, "stop"));
