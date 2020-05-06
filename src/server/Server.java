@@ -38,7 +38,7 @@ public class Server {
 
 
     public Server() {
-        while(this.server == null){
+        while (this.server == null) {
             try {
                 Scanner scanner = new Scanner(System.in);
                 System.out.print("Enter port: ");
@@ -82,7 +82,7 @@ public class Server {
     static class RequestHandler implements HttpHandler {
 
         private Server server;
-        private Gson gson= new GsonBuilder().disableHtmlEscaping().create();
+        private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         private String response;
         private Address requestAddress;
 
@@ -113,12 +113,11 @@ public class Server {
                         System.out.println("IGNORES DOWNLOAD, THIS SERVER INITIATED DOWNLOAD REQUEST");
                         this.response = new Response(200, null, null).toString();
                         exchange.sendResponseHeaders(200, this.response.getBytes().length);
-                    } else if (this.server.pathList.stream().anyMatch(p-> p.getId().equals(fileId) && p.getDownload() != null)) {
+                    } else if (this.server.pathList.stream().anyMatch(p -> p.getId().equals(fileId) && p.getDownload() != null)) {
                         System.out.println("IGNORES DOWNLOAD, THIS SERVER ALREADY RESPONDED TO IT");
                         this.response = new Response(200, null, null).toString();
                         exchange.sendResponseHeaders(200, this.response.getBytes().length);
-                    }
-                    else if (randomValue > this.server.laziness) {
+                    } else if (randomValue > this.server.laziness) {
                         System.out.println("DOWNLOADS FILE");
                         this.addPath(new Path(fileId, requestAddress, null));
                         Request req = new Request(fileUrl, "get", null, null);
@@ -130,13 +129,13 @@ public class Server {
                             this.response = new Response(200, null, null).toString();
                             exchange.sendResponseHeaders(200, this.response.getBytes().length);
                             Optional<Path> optionalPath = this.server.pathList.stream().filter(p -> p.getId().equals(fileId)).findAny();
-                            if (optionalPath.isPresent()) {
+                            if (optionalPath.isPresent() && optionalPath.get().getDownload() != null) {
                                 System.out.println("SENDS REQUEST TO ONE IN PATH TABLE");
                                 sendFileRequest(optionalPath.get().getDownload(), fileId, new Response(200, mimeTypeFinal, encodedFile));
                             } else {
                                 System.out.println("SENDS REQUEST TO ALL");
                                 this.server.addressList.forEach(address
-                                                -> sendFileRequest(address, fileId, new Response(200, mimeTypeFinal, encodedFile)));
+                                        -> sendFileRequest(address, fileId, new Response(200, mimeTypeFinal, encodedFile)));
                             }
                         } else {
                             this.response = new Response(500, null, null).toString();
@@ -163,16 +162,20 @@ public class Server {
                     String fileId = this.server.currentQueries.get("id");
                     inputStream = exchange.getRequestBody();
                     String requestBody = getRequestBody(inputStream);
-                    this.addPath(new Path(fileId, null, this.requestAddress));
                     if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
                         System.out.println("FILE RECEIVED");
                         System.out.println(requestBody);
                         Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), fileId);
                         this.response = new Response(200, null, null).toString();
-                    } else {
+                    } else if (this.server.pathList.stream().anyMatch(p -> p.getId().equals(fileId) && p.getFile() != null)) {
+                        System.out.println("IGNORES SEND FILE REQUEST");
                         this.response = new Response(200, null, null).toString();
-                        Optional<Path> optionalPath = this.server.pathList.stream().filter(p-> p.getId().equals(fileId)).findAny();
-                        if (optionalPath.isPresent()) {
+                        exchange.sendResponseHeaders(200, response.getBytes().length);
+                    } else {
+                        this.addPath(new Path(fileId, null, this.requestAddress));
+                        this.response = new Response(200, null, null).toString();
+                        Optional<Path> optionalPath = this.server.pathList.stream().filter(p -> p.getId().equals(fileId)).findAny();
+                        if (optionalPath.isPresent() && optionalPath.get().getDownload() != null) {
                             System.out.println("SENDS REQUEST TO ONE IN PATH TABLE");
                             sendFileRequest(optionalPath.get().getDownload(), fileId, requestBody);
                         } else {
