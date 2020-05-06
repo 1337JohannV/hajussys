@@ -64,7 +64,7 @@ public class Main {
         Request request = new Request("http://localhost:1215/addresses", "get", null, server.serverAddress);
         HttpResponse<String> response = request.sendRequest();
         List<Address> addresses = gson.fromJson(response.body(), listType);
-        this.server.addressList = Arrays.stream(addresses.toArray(new Address[0]))
+        this.server.addressList = addresses.stream()
                 .filter(address -> !address.equals(this.server.serverAddress))
                 .collect(Collectors.toList());
         System.out.print("Current Neighbours: ");
@@ -87,7 +87,7 @@ public class Main {
     private void commandExplanations(){
         System.out.println("current - Shows current list of neighbours.");
         System.out.println("update - Updates list of neighbours manually");
-        System.out.println("download - Starts download file process, sends request to all neighbors.");
+        System.out.println("download - Starts download html file of website. -> download URL");
         System.out.println("help - Shows explanation of commands.");
         System.out.println("stop - Stops this node.");
     }
