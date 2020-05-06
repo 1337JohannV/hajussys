@@ -23,11 +23,9 @@ public class Main {
 
     private void startServer() throws InterruptedException {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter port");
-        int serverPort = scanner.nextInt();
-        server = new Server(serverPort);
+        server = new Server();
         if (server.isRunning()) {
-            System.out.println(String.format("Server listening at port: %s", serverPort));
+            System.out.println(String.format("Server listening at port: %s", server.getPort()));
             System.out.println("Write stop to terminate");
             System.out.println("Commands: update_address, current_addresses");
             System.out.println("CHECKING AVAILABLE NODES...");
