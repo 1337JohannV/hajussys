@@ -90,7 +90,6 @@ public class Server {
                 if ("/download".equals(path)) {
                     String fileUrl = server.currentQueries.get("url");
                     String fileId = server.currentQueries.get("id");
-                    this.addPath(new Path(fileId, requestAddress, null));
                     System.out.println(this.server.pathList);
                     Random r = new Random();
                     double randomValue = 1 * r.nextDouble();
@@ -98,8 +97,14 @@ public class Server {
                         System.out.println("IGNORES DOWNLOAD, THIS SERVER INITIATED DOWNLOAD REQUEST");
                         this.response = new Response(200, null, null).toString();
                         exchange.sendResponseHeaders(200, this.response.getBytes().length);
-                    } else if (randomValue > this.server.laziness) {
+                    } else if (this.server.pathList.stream().anyMatch(p-> p.getId().equals(fileId) && p.getDownload() != null)) {
+                        System.out.println("IGNORES DOWNLOAD, THIS SERVER ALREADY RESPONDED TO IT");
+                        this.response = new Response(200, null, null).toString();
+                        exchange.sendResponseHeaders(200, this.response.getBytes().length);
+                    }
+                    else if (randomValue > this.server.laziness) {
                         System.out.println("DOWNLOADS FILE");
+                        this.addPath(new Path(fileId, requestAddress, null));
                         Request req = new Request(fileUrl, "get", null, null);
                         HttpResponse response = req.sendRequest();
                         if (response != null) {

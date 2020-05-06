@@ -9,6 +9,7 @@ import util.Encoder;
 
 import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -81,7 +82,12 @@ public class Main {
             Request request = new Request(address.getHttpAddress(String.format("/download?id=%s&url=%s", this.server.currentId.toString(), url)),
                     "get", null, server.serverAddress);
             HttpResponse<String> response = request.sendRequest();
-            System.out.println(response.body());
+            if (response != null) {
+                System.out.println("RESPONSE RECEIVED");
+                System.out.println(response.body());
+            } else {
+                System.out.println("DOWNLOAD REQUEST FAILED");
+            }
         });
     }
 
