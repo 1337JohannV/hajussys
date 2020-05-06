@@ -97,7 +97,6 @@ public class Server {
                         .toString()
                         .split("/")[1], 1215);
             }
-            System.out.println("REQUEST ADDRESS:" + requestAddress);
             if (exchange.getRequestMethod().equalsIgnoreCase("get")) {
                 if ("/download".equals(exchange.getRequestURI().getPath())) {
                     downloadRequest(exchange);
@@ -129,11 +128,12 @@ public class Server {
                 System.out.println("DOWNLOADS FILE");
                 this.addPath(new Path(fileId, requestAddress, null));
                 Request req = new Request(fileUrl, "get", null, null);
-                HttpResponse response = req.sendRequest();
+                HttpResponse<InputStream> response = req.sendRequest(true);
                 if (response != null) {
+                    byte[] data = response.body().readAllBytes();
                     String mimeType = response.headers().firstValue("Content-Type").orElse(null);
                     final String mimeTypeFinal = mimeType != null ? mimeType.split(";")[0] : null;
-                    String encodedFile = Base64.getEncoder().encodeToString(response.body().toString().getBytes(StandardCharsets.UTF_8));
+                    String encodedFile = Base64.getEncoder().encodeToString(data);
                     this.response = new Response(200, null, null).toString();
                     exchange.sendResponseHeaders(200, this.response.getBytes().length);
                     Optional<Path> optionalPath = this.server.pathList.stream().filter(p -> p.getId().equals(fileId)).findAny();
@@ -164,13 +164,12 @@ public class Server {
         }
 
         private void fileRequest(HttpExchange exchange) throws IOException {
-            InputStream inputStream = exchange.getRequestBody();;
+            InputStream inputStream = exchange.getRequestBody();
             OutputStream outputStream;
             String fileId = getQueryStrings(exchange.getRequestURI().getQuery()).get("id");
             String requestBody = getRequestBody(inputStream);
             if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
                 System.out.println("FILE RECEIVED");
-                System.out.println(requestBody);
                 Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), fileId);
                 this.response = new Response(200, null, null).toString();
             } else if (this.server.pathList.stream().anyMatch(p -> p.getId().equals(fileId) && p.getFile() != null)) {
@@ -243,7 +242,7 @@ public class Server {
             int b;
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
             BufferedReader bufferReader = new BufferedReader(inputStreamReader);
-            StringBuilder stringBuilder = new StringBuilder(512);
+            StringBuilder stringBuilder = new StringBuilder();
             while ((b = bufferReader.read()) != -1) {
                 stringBuilder.append((char) b);
             }
@@ -256,7 +255,6 @@ public class Server {
             if (query == null) {
                 return Collections.emptyMap();
             }
-            System.out.println("query: " + query);
             Map<String, String> result = new HashMap<>();
             for (String param : query.split("&")) {
                 String[] entry = param.split("=");

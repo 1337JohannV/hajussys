@@ -78,7 +78,6 @@ public class Main {
             HttpResponse<String> response = request.sendRequest();
             if (response != null) {
                 System.out.println("RESPONSE RECEIVED");
-                System.out.println(response.body());
             } else {
                 System.out.println("DOWNLOAD REQUEST FAILED");
             }

@@ -3,7 +3,7 @@ package request;
 
 import models.Address;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -43,6 +43,14 @@ public class Request {
     public HttpResponse<String> sendRequest() {
         try {
             return this.httpClient.send(this.httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public HttpResponse<InputStream> sendRequest(boolean dummy) {
+        try {
+            return this.httpClient.send(this.httpRequest, HttpResponse.BodyHandlers.ofInputStream());
         } catch (Exception e) {
             return null;
         }
