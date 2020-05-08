@@ -44,7 +44,6 @@ public class CatalogueServer {
 
     private class RequestHandler implements HttpHandler {
         private CatalogueServer server;
-        private String response;
         private Gson gson = new Gson();
 
         RequestHandler(CatalogueServer cs) {
@@ -62,7 +61,7 @@ public class CatalogueServer {
             });
             this.addRequestAddress(this.server.addressList, toAdd);
             if (path.equals("/addresses")) {
-                this.response = gson.toJson(this.server.addressList);
+                String response = gson.toJson(this.server.addressList);
                 exchange.sendResponseHeaders(200, response.getBytes().length);
                 OutputStream outputStream = exchange.getResponseBody();
                 outputStream.write(response.getBytes());
@@ -78,23 +77,6 @@ public class CatalogueServer {
                 return;
             }
             addresses.add(address);
-        }
-
-
-        private Map<String, String> getQueryStrings(String query) {
-            if (query == null) {
-                return Collections.emptyMap();
-            }
-            Map<String, String> result = new HashMap<>();
-            for (String param : query.split("&")) {
-                String[] entry = param.split("=");
-                if (entry.length > 1) {
-                    result.put(entry[0], entry[1]);
-                } else {
-                    result.put(entry[0], "");
-                }
-            }
-            return result;
         }
 
     }

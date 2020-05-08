@@ -74,14 +74,20 @@ public class Main {
     }
 
     private void sendDownloadRequest(String url) {
+        this.server.setCurrentFileName(url.replace(".", "_")
+                .replace("%3A", "_")
+                .replace("%2F%2F", "")
+                .replace("%2F","_"));
         this.server.addressList.forEach(address -> {
             Request request = new Request(address.getHttpAddress(String.format("/download?id=%s&url=%s", this.server.currentId.toString(), url)),
                     "get", null, server.serverAddress);
             HttpResponse<String> response = request.sendRequest();
             if (response != null) {
                 System.out.println("RESPONSE RECEIVED");
+                this.server.setCurrentFileName("");
             } else {
                 System.out.println("DOWNLOAD REQUEST FAILED");
+                this.server.setCurrentFileName("");
             }
         });
     }

@@ -25,7 +25,9 @@ import java.util.stream.Collectors;
 
 public class Server {
 
+
     private HttpServer server;
+    private String currentFileName = "";
     public List<Address> addressList = new ArrayList<>();
     public List<Path> pathList = new ArrayList<>();
     public int port;
@@ -57,6 +59,14 @@ public class Server {
             }
         }
 
+    }
+
+    public String getCurrentFileName() {
+        return currentFileName;
+    }
+
+    public void setCurrentFileName(String currentFileName) {
+        this.currentFileName = currentFileName;
     }
 
     public void stopServer() {
@@ -171,7 +181,11 @@ public class Server {
             String requestBody = getRequestBody(inputStream);
             if (this.server.currentId != null && this.server.currentId.toString().equals(fileId)) {
                 System.out.println("FILE RECEIVED");
-                Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), fileId);
+                if(server.getCurrentFileName().equals("")){
+                    Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), fileId);
+                } else {
+                    Encoder.decodeToFile(gson.fromJson(requestBody, Response.class), server.getCurrentFileName());
+                }
                 this.response = new Response(200, null, null).toString();
             } else if (this.server.pathList.stream().anyMatch(p -> p.getId().equals(fileId) && p.getFile() != null)) {
                 System.out.println("IGNORES SEND FILE REQUEST");
