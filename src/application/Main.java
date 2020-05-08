@@ -26,12 +26,14 @@ public class Main {
     private void startServer() throws InterruptedException {
         Scanner scanner = new Scanner(System.in);
         server = new Server();
+        System.out.println("Enter catalogue server ip: ");
+        this.server.catalogueServerIp = scanner.nextLine();
         if (server.isRunning()) {
             System.out.println(String.format("Server listening at port: %s", server.getPort()));
             System.out.println("Commands: current, update, help, download, stop.");
             System.out.println("Write help for explanation of commands.");
             ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-            Runnable checkNodes = this::getAddresses;
+            Runnable checkNodes = () -> getAddresses(server.catalogueServerIp);
             executorService.scheduleAtFixedRate(checkNodes, 0, 60, TimeUnit.SECONDS);
             String line;
             do {
@@ -40,7 +42,7 @@ public class Main {
                     System.out.println(server.addressList);
                 }
                 if (line.equalsIgnoreCase("update")) {
-                    getAddresses();
+                    getAddresses(server.catalogueServerIp);
                 }
                 if(line.equalsIgnoreCase("help")) {
                     commandExplanations();
@@ -59,9 +61,9 @@ public class Main {
         }
     }
 
-    private void getAddresses() {
+    private void getAddresses(String serverIp) {
         System.out.println("Updating Neighbours");
-        Request request = new Request("http://localhost:1215/addresses", "get", null, server.serverAddress);
+        Request request = new Request(String.format("http://%s:1215/addresses", serverIp), "get", null, server.serverAddress);
         HttpResponse<String> response = request.sendRequest();
         List<Address> addresses = gson.fromJson(response.body(), listType);
         this.server.addressList = addresses.stream()

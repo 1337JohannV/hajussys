@@ -33,6 +33,7 @@ public class Server {
     public Address serverAddress;
     private double laziness = 0.5d;
     public UUID currentId;
+    public String catalogueServerIp;
 
 
     public Server() {
